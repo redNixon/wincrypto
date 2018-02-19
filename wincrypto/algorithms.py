@@ -6,16 +6,15 @@ import sys
 import Crypto.Cipher.PKCS1_v1_5
 import Crypto.Cipher.AES
 import Crypto.Cipher.ARC4
+import Crypto.Cipher.ARC2
 from Crypto.PublicKey import RSA
 from Crypto.Util.number import long_to_bytes, bytes_to_long, inverse
 
 from wincrypto.constants import RSAPUBKEY, RSAPUBKEY_s, RSAPUBKEY_MAGIC, PUBLICKEYSTRUC_s, bType_PUBLICKEYBLOB, \
     CUR_BLOB_VERSION, CALG_RSA_KEYX, PRIVATEKEYBLOB_MAGIC, PRIVATEKEYBLOB, bType_PRIVATEKEYBLOB, bType_PLAINTEXTKEYBLOB, \
-    bType_SIMPLEBLOB, CALG_RC4, CALG_AES_128, CALG_AES_192, CALG_AES_256, CALG_MD5, CALG_SHA1, ALG_CLASS_HASH, \
+    bType_SIMPLEBLOB, CALG_RC2, CALG_RC4, CALG_AES_128, CALG_AES_192, CALG_AES_256, CALG_MD5, CALG_SHA1, ALG_CLASS_HASH, \
     ALG_CLASS_KEY_EXCHANGE, ALG_CLASS_DATA_ENCRYPT
 from wincrypto.util import add_pkcs5_padding, remove_pkcs5_padding, GET_ALG_CLASS
-
-
 
 
 # python2/3 compatibility
@@ -140,6 +139,16 @@ class symmetric_HCryptKey(HCryptKey):
         result += rsa_key.encrypt(self.key)
         return result
 
+class RC2(symmetric_HCryptKey):
+    alg_id = CALG_RC2
+    key_len = 16
+
+    def encrypt(self, data):
+        return Crypto.Cipher.ARC2.new(self.key).encrypt(data)
+
+    def decrypt(self, data):
+        return Crypto.Cipher.ARC2.new(self.key).encrypt(data)
+
 
 class RC4(symmetric_HCryptKey):
     alg_id = CALG_RC4
@@ -210,7 +219,7 @@ class SHA1(HCryptHash):
     hash_class = hashlib.sha1
 
 
-algorithm_list = [RC4, AES128, AES192, AES256, RSA_KEYX, MD5, SHA1]
+algorithm_list = [RC2, RC4, AES128, AES192, AES256, RSA_KEYX, MD5, SHA1]
 symmetric_algorithms = [x for x in algorithm_list if GET_ALG_CLASS(x.alg_id) == ALG_CLASS_DATA_ENCRYPT]
 asymmetric_algorithms = [x for x in algorithm_list if GET_ALG_CLASS(x.alg_id) == ALG_CLASS_KEY_EXCHANGE]
 hash_algorithms = [x for x in algorithm_list if GET_ALG_CLASS(x.alg_id) == ALG_CLASS_HASH]
